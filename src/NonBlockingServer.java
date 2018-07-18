@@ -9,36 +9,36 @@ public class NonBlockingServer {
     private ByteBuffer buffer = ByteBuffer.allocate(2*1024);
 
     private void startEchoServer() {
-        try (
-            Selector selector = Selector.open();
-            ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
+        try ( //1
+            Selector selector = Selector.open(); //2
+            ServerSocketChannel serverSocketChannel = ServerSocketChannel.open(); //3
         ) {
-            if((serverSocketChannel.isOpen()) && (selector.isOpen())) {
-                serverSocketChannel.configureBlocking(false);
-                serverSocketChannel.bind(new InetSocketAddress(8888));
+            if((serverSocketChannel.isOpen()) && (selector.isOpen())) { //4
+                serverSocketChannel.configureBlocking(false); //5
+                serverSocketChannel.bind(new InetSocketAddress(8888)); //6
 
-                serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
+                serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT); //7
                 System.out.println("접속 대기중");
 
                 while(true) {
-                    selector.select();
-                    Iterator<SelectionKey> keys = selector.selectedKeys().iterator();
+                    selector.select(); //8
+                    Iterator<SelectionKey> keys = selector.selectedKeys().iterator(); //9
 
                     while(keys.hasNext()) {
                         SelectionKey key = (SelectionKey)keys.next();
-                        keys.remove();
+                        keys.remove(); //10
 
                         if(!key.isValid()) {
                             continue;
                         }
 
-                        if(key.isAcceptable()) {
+                        if(key.isAcceptable()) { //11
                             this.acceptOP(key, selector);
                         }
-                        else if(key.isReadable()) {
+                        else if(key.isReadable()) { //12
                             this.readOP(key);
                         }
-                        else if(key.isWritable()) {
+                        else if(key.isWritable()) { //13
                             this.writeOP(key);
                         }
                     }
@@ -54,14 +54,14 @@ public class NonBlockingServer {
     }
 
     private void acceptOP(SelectionKey key, Selector selector) throws IOException {
-        ServerSocketChannel serverChannel = (ServerSocketChannel)key.channel();
-        SocketChannel socketChannel = serverChannel.accept();
-        socketChannel.configureBlocking(false);
+        ServerSocketChannel serverChannel = (ServerSocketChannel)key.channel(); //14
+        SocketChannel socketChannel = serverChannel.accept(); //15
+        socketChannel.configureBlocking(false); //16
 
         System.out.println("클라이언트 연결됨 : " + socketChannel.getRemoteAddress());
 
         keepDataTrack.put(socketChannel, new ArrayList<byte[]>());
-        socketChannel.register(selector, SelectionKey.OP_READ);
+        socketChannel.register(selector, SelectionKey.OP_READ); //17
     }
 
     private void readOP(SelectionKey key) {
